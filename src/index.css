@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Hier können wir zusätzliche globale Styles definieren */
+/* Globale Korrekturen für den Editor */
 #root {
   min-height: 100vh;
   display: flex;
