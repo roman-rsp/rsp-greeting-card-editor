@@ -1,11 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
-import './index.css' // Importiert die Tailwind-Direktiven und globalen Styles
+import './index.css' // WICHTIG: Hier laden wir die Tailwind-Direktiven
 
 /**
  * RSP KUNSTVERLAG - Start-Logik
- * Diese Datei verbindet den Code mit der index.html
+ * Diese Datei verbindet den React-Code mit der index.html
  */
 
 const rootElement = document.getElementById('root');
