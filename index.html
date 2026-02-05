@@ -4,16 +4,27 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RSP Karten-Editor</title>
-    <!-- Tailwind CSS via CDN für eine reibungslose Darstellung -->
+    <!-- Tailwind CSS via CDN zur Sicherheit, falls PostCSS im Build Probleme macht -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      #root { min-height: 100vh; }
+      #root { min-height: 100vh; display: flex; flex-direction: column; }
       body { margin: 0; padding: 0; background-color: #f8fafc; }
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <!-- Wichtig: Pfad zur Start-Datei im src-Ordner -->
-    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- WICHTIG: Der Pfad muss relativ zur index.html passen -->
+    <script type="module" src="src/main.jsx"></script>
+    
+    <script>
+      // Kleiner Notfall-Check: Falls das Skript oben nicht lädt
+      window.onerror = function(msg, url, line) {
+        document.getElementById('root').innerHTML = 
+          '<div style="padding: 20px; color: red; font-family: sans-serif;">' +
+          '<strong>Script-Fehler:</strong> ' + msg + '<br><small>Datei: ' + url + ' (Zeile ' + line + ')</small>' +
+          '</div>';
+      };
+    </script>
   </body>
 </html>
