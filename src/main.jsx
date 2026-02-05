@@ -5,11 +5,18 @@ import './index.css'
 
 /**
  * RSP KUNSTVERLAG - Start-Logik
- * Hier wird die CSS-Datei geladen, die das CDN ersetzt.
+ * Diese Datei verbindet den React-Code mit der index.html.
  */
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
+const rootElement = document.getElementById('root');
+
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+} else {
+  console.error("Fehler: Das HTML-Element 'root' wurde nicht gefunden.");
+}
