@@ -1,10 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
-import './index.css' // WICHTIG: Hier laden wir die Tailwind-Direktiven in die App
+import './index.css' // Wichtig: Hier wird das optimierte Tailwind geladen
 
 /**
- * RSP KUNSTVERLAG - Start-Logik
+ * RSP KUNSTVERLAG - Einstiegspunkt
  * Diese Datei verbindet den Code mit der index.html
  */
 
@@ -18,5 +18,5 @@ if (rootElement) {
     </React.StrictMode>
   );
 } else {
-  console.error("Kritischer Fehler: Das Element mit der ID 'root' wurde nicht gefunden.");
+  console.error("Kritischer Fehler: Das Element 'root' wurde nicht gefunden.");
 }
