@@ -2,14 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Grundlegende Stile für den Editor */
+/* Grundlegende Layout-Styles */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 body {
   margin: 0;
   padding: 0;
   background-color: #f8fafc;
   -webkit-font-smoothing: antialiased;
-}
-
-#root {
-  min-height: 100vh;
+  -moz-osx-font-smoothing: grayscale;
 }
