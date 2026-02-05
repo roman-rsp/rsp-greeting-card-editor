@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 
 /**
- * RSP KUNSTVERLAG - Einstiegspunkt
- * Diese Datei verbindet den Programmier-Code mit der HTML-Seite.
+ * RSP KUNSTVERLAG - Start-Logik
+ * Diese Datei verbindet den React-Code mit dem 'root'-Element der index.html.
  */
 
 const rootElement = document.getElementById('root');
@@ -17,5 +17,5 @@ if (rootElement) {
     </React.StrictMode>
   );
 } else {
-  console.error("Kritischer Fehler: Das Element 'root' wurde nicht gefunden.");
+  console.error("Fehler: Das HTML-Element 'root' wurde nicht gefunden. Bitte prüfe die index.html.");
 }
