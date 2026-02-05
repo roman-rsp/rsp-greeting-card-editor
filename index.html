@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RSP Karten-Editor</title>
-    <!-- Tailwind CDN für einfache Gestaltung ohne Build-Hürden -->
+    <!-- Tailwind CSS via CDN für eine reibungslose Darstellung -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Verhindert das Flackern beim Laden */
       #root { min-height: 100vh; }
+      body { margin: 0; padding: 0; background-color: #f8fafc; }
     </style>
   </head>
-  <body class="bg-slate-100">
+  <body>
     <div id="root"></div>
-    <!-- Der Pfad muss exakt auf die main.jsx im src Ordner zeigen -->
+    <!-- Wichtig: Pfad zur Start-Datei im src-Ordner -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
