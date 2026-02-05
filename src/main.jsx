@@ -4,8 +4,9 @@ import App from './App.jsx'
 
 /**
  * RSP KUNSTVERLAG - Start-Logik
- * Diese Datei verbindet den React-Code mit dem 'root'-Element der index.html.
+ * Wir fügen einen Console-Log hinzu, um zu sehen, ob die Datei überhaupt geladen wird.
  */
+console.log("React-App: Initialisierung wird gestartet...");
 
 const rootElement = document.getElementById('root');
 
@@ -16,6 +17,7 @@ if (rootElement) {
       <App />
     </React.StrictMode>
   );
+  console.log("React-App: Rendering erfolgreich angestoßen.");
 } else {
-  console.error("Fehler: Das HTML-Element 'root' wurde nicht gefunden. Bitte prüfe die index.html.");
+  console.error("Kritischer Fehler: Das Element 'root' wurde nicht gefunden.");
 }
