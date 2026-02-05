@@ -1,22 +1,15 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
-import './index.css' // Wichtig: Hiermit laden wir das optimierte Tailwind-CSS
+import './index.css' 
 
 /**
  * RSP KUNSTVERLAG - Start-Logik
- * Diese Datei verbindet den Code mit der index.html
+ * Hier wird die CSS-Datei geladen, die das CDN ersetzt.
  */
 
-const rootElement = document.getElementById('root');
-
-if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-} else {
-  console.error("Kritischer Fehler: Das Element mit der ID 'root' wurde nicht gefunden.");
-}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+)
