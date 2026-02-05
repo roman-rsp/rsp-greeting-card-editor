@@ -2,16 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Globale Korrekturen für den Editor */
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
+/* Grundlegende Stile für den Editor */
 body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
 }
