@@ -133,7 +133,7 @@ const App = () => {
         {selectedElement ? (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-              <div className="flex flex-col">
+              <div className="flex flex-col text-left">
                 <span className="text-xs font-bold text-slate-800 tracking-tight">Status</span>
                 <span className="text-[10px] text-slate-400">{selectedElement.isLocked ? 'Element fixiert' : 'Beweglich'}</span>
               </div>
@@ -164,9 +164,9 @@ const App = () => {
         )}
       </aside>
 
-      <main className="flex-1 flex flex-col relative overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20 shadow-sm text-left">
-          <div className="flex flex-col">
+      <main className="flex-1 flex flex-col relative overflow-hidden text-left">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20 shadow-sm">
+          <div className="flex flex-col text-left">
               <span className="text-[10px] uppercase font-bold text-indigo-600 tracking-widest leading-none mb-1">Live Vorschau</span>
               <span className="text-sm font-bold tracking-tight text-slate-800">{project.name}</span>
           </div>
