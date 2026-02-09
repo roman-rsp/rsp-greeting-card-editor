@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 
 /**
- * MOCK_PROJECT: Erweitert um Szenario A & B Beispiele
- * Wird genutzt, wenn n8n nicht erreichbar ist.
+ * MOCK_PROJECT: Lokale Testdaten
+ * Korrektur: Name ist nun konsistent '2502.png' (wie in deiner 29009_data.json).
  */
 const MOCK_PROJECT = {
   name: "Karte 29009 (Vorschau)",
@@ -52,7 +52,7 @@ const MOCK_PROJECT = {
       left: 50,
       width: 80,
       height: 80,
-      linkedFileName: "25002.png",
+      linkedFileName: "2502.png", 
       contentTransform: {
         topOffset: 0,
         leftOffset: 0,
@@ -98,7 +98,7 @@ const App = () => {
         });
         setStatus('live');
       } catch (err) {
-        console.warn("Nutze Offline-Fallback:", err.message);
+        console.warn("API nicht erreichbar, nutze Fallback:", err.message);
         setProject({ activePage: 'page_0', ...MOCK_PROJECT });
         setStatus('local');
       } finally {
@@ -154,18 +154,17 @@ const App = () => {
 
       {/* Eigenschaften-Panel */}
       <aside className="w-80 bg-white border-l border-slate-200 p-6 shadow-xl z-10 overflow-y-auto">
-        <div className="flex items-center gap-2 mb-8">
+        <div className="flex items-center gap-2 mb-8 text-left font-sans">
           <Settings2 size={16} className="text-indigo-600" />
           <h2 className="font-bold uppercase text-[10px] tracking-[0.2em] text-slate-400">Eigenschaften</h2>
         </div>
 
         {selectedElement ? (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
-            {/* Status-Card */}
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-800 tracking-tight leading-none mb-1 text-left">Element-Status</span>
-                <span className="text-[10px] text-slate-400 text-left">{selectedElement.isLocked ? 'Position fixiert' : 'Beweglich'}</span>
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-bold text-slate-800 tracking-tight leading-none mb-1">Status</span>
+                <span className="text-[10px] text-slate-400">{selectedElement.isLocked ? 'Fixiert' : 'Beweglich'}</span>
               </div>
               <button 
                 onClick={() => updateElement(selectedElement.id, { isLocked: !selectedElement.isLocked })}
@@ -175,10 +174,9 @@ const App = () => {
               </button>
             </div>
 
-            {/* Content Section */}
             {selectedElement.type === 'text' && (
-              <div className="space-y-3">
-                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block text-left">Textinhalt</label>
+              <div className="space-y-3 text-left">
+                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block font-sans">Textinhalt</label>
                 <textarea 
                   className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm h-40 focus:border-indigo-500 outline-none transition-all resize-none shadow-inner bg-slate-50/50"
                   value={selectedElement.content || ""}
@@ -190,18 +188,18 @@ const App = () => {
             {selectedElement.type === 'image' && (
               <div className="space-y-4">
                 <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 text-left">
-                  <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest block mb-2">Verknüpfte Datei</label>
+                  <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest block mb-2 font-sans">Datei (aus JSON)</label>
                   <p className="text-[11px] font-mono text-indigo-600 truncate">{selectedElement.linkedFileName}</p>
                 </div>
                 
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
                   <div className="flex justify-between items-center mb-2">
-                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none">Debug-Pfad</label>
+                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none font-sans">Pfad-Vorschau</label>
                     <a 
                       href={`${window.location.origin}${getObjectImageSrc(selectedElement)}`} 
                       target="_blank" 
                       rel="noreferrer"
-                      className="flex items-center gap-1 text-[10px] text-indigo-600 font-bold hover:underline"
+                      className="flex items-center gap-1 text-[10px] text-indigo-600 font-bold hover:underline font-sans"
                     >
                       Testen <ExternalLink size={10} />
                     </a>
@@ -209,24 +207,14 @@ const App = () => {
                   <code className="text-[9px] block bg-white p-2 rounded border border-slate-200 break-all text-slate-500 font-mono">
                     {getObjectImageSrc(selectedElement)}
                   </code>
-                  <div className="mt-3 p-2 bg-white rounded border border-slate-200 space-y-2">
-                    <p className="text-[9px] text-slate-500 font-bold flex items-center gap-1">
-                      <Search size={10} /> Checkliste für 404 Fehler:
-                    </p>
-                    <ul className="text-[8px] text-slate-400 space-y-1 list-disc pl-3">
-                      <li>Datei auf GitHub im Ordner <code className="bg-slate-50 px-1 italic">/public</code>?</li>
-                      <li>Kleinschreibung beachtet (<code className="bg-slate-50 px-1 italic">.png</code> vs <code className="bg-slate-50 px-1 italic">.PNG</code>)?</li>
-                      <li>Vercel-Build abgeschlossen (Deployment: Ready)?</li>
-                    </ul>
-                  </div>
                 </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 opacity-40">
+          <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 opacity-40 text-left">
             <Layers size={32} />
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4">Wähle ein Element</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4 leading-relaxed font-sans">Wähle ein Element</p>
           </div>
         )}
       </aside>
@@ -235,13 +223,13 @@ const App = () => {
       <main className="flex-1 flex flex-col relative overflow-hidden">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20 shadow-sm text-left">
           <div className="flex flex-col">
-              <span className={`text-[10px] uppercase font-bold tracking-widest leading-none mb-1 ${status === 'local' ? 'text-amber-500' : 'text-indigo-600'}`}>
+              <span className={`text-[10px] uppercase font-bold tracking-widest leading-none mb-1 font-sans ${status === 'local' ? 'text-amber-500' : 'text-indigo-600'}`}>
                 {status === 'local' ? 'Status: Lokal' : 'Status: Live'}
               </span>
               <span className="text-sm font-bold tracking-tight text-slate-800">{project.name}</span>
           </div>
-          <button className="flex items-center gap-2 px-8 py-2.5 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg active:scale-95">
-            <Save size={16} /> Entwurf speichern
+          <button className="flex items-center gap-2 px-8 py-2.5 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg active:scale-95 font-sans">
+            <Save size={16} /> Speichern
           </button>
         </header>
 
@@ -304,7 +292,7 @@ const App = () => {
                     {/* Platzhalter wenn Bild fehlt */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center p-2 border border-slate-100 bg-slate-50 text-slate-300">
                         <ImageIcon size={24} className="mb-2 opacity-20" />
-                        <span className="text-[9px] uppercase font-bold tracking-widest mb-1 opacity-50 italic text-center">Bild fehlt</span>
+                        <span className="text-[9px] uppercase font-bold tracking-widest mb-1 opacity-50 italic text-center font-sans">Bild fehlt</span>
                         <span className="text-[7px] font-mono break-all text-center px-4 leading-tight opacity-40 uppercase">{obj.linkedFileName}</span>
                     </div>
                   </div>
