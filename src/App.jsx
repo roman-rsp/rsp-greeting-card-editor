@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Settings2, Lock, Unlock, Eye, EyeOff, 
-  Layers, Save, ChevronLeft, Loader2, AlertCircle, Info
+  Layers, Save, ChevronLeft, Loader2, AlertCircle, Info, Image as ImageIcon, ExternalLink, Search
 } from 'lucide-react';
 
 /**
  * MOCK_PROJECT: Erweitert um Szenario A & B Beispiele
+ * Wird genutzt, wenn n8n nicht erreichbar ist.
  */
 const MOCK_PROJECT = {
   name: "Karte 29009 (Vorschau)",
@@ -23,7 +24,7 @@ const MOCK_PROJECT = {
       id: "Front_Motiv",
       type: "image",
       top: 0,
-      left: 306, // Rechte Seite der Klappkarte
+      left: 306,
       width: 306,
       height: 306,
       linkedFileName: "placeholder.jpg",
@@ -108,19 +109,11 @@ const App = () => {
     fetchData();
   }, []);
 
-  /**
-   * Intelligente Bildpfad-Auflösung
-   * Unterscheidet zwischen Szenario A (Global) und Szenario B (Lokal)
-   */
   const getObjectImageSrc = (obj) => {
-    if (obj.type !== 'image') return null;
-    
-    // Szenario A: Globales Format-Asset (z.B. Vorderseiten)
+    if (!obj || obj.type !== 'image') return null;
     if (obj.metadata && obj.metadata['editor:dynamic-source'] === 'auto_filename') {
       return `/assets/216x108/${artNr}.jpg`;
     }
-    
-    // Szenario B: Lokales Produkt-Asset (z.B. Klee, Logos)
     return `/assets/${artNr}/${obj.linkedFileName}`;
   };
 
@@ -136,9 +129,9 @@ const App = () => {
   };
 
   if (loading) return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-white gap-4 text-slate-400 font-sans">
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-white gap-4 text-slate-400 font-sans text-left">
       <Loader2 className="animate-spin text-indigo-600" size={40} />
-      <p className="font-medium animate-pulse tracking-tight text-sm text-left">Initialisiere RSP Editor...</p>
+      <p className="font-medium animate-pulse tracking-tight text-sm">Synchronisiere RSP Editor...</p>
     </div>
   );
 
@@ -151,7 +144,7 @@ const App = () => {
       {/* Sidebar Navigation */}
       <aside className="w-16 bg-slate-900 flex flex-col items-center py-6 gap-6 text-slate-400 shadow-2xl">
         <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold mb-4 italic shadow-lg">RSP</div>
-        <button className="p-2 text-white border-b-2 border-indigo-500">1</button>
+        <button className="p-2 text-white border-b-2 border-indigo-500 font-bold">1</button>
         <div className="mt-auto border-t border-slate-700 pt-6">
            <button onClick={() => setShowBleed(!showBleed)} className={`p-2 rounded-md transition-all ${showBleed ? 'text-indigo-400 bg-slate-800' : 'hover:text-white'}`}>
             {showBleed ? <Eye size={20} /> : <EyeOff size={20} />}
@@ -163,25 +156,16 @@ const App = () => {
       <aside className="w-80 bg-white border-l border-slate-200 p-6 shadow-xl z-10 overflow-y-auto">
         <div className="flex items-center gap-2 mb-8">
           <Settings2 size={16} className="text-indigo-600" />
-          <h2 className="font-bold uppercase text-[10px] tracking-[0.2em] text-slate-400 text-left">Eigenschaften</h2>
+          <h2 className="font-bold uppercase text-[10px] tracking-[0.2em] text-slate-400">Eigenschaften</h2>
         </div>
-
-        {status === 'local' && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex gap-3 text-amber-800 items-start shadow-sm">
-            <Info size={16} className="shrink-0 mt-0.5" />
-            <div className="text-[10px] leading-tight opacity-90 text-left">
-              <p className="font-bold mb-1 uppercase tracking-tight">Offline-Vorschau</p>
-              Daten werden lokal simuliert.
-            </div>
-          </div>
-        )}
 
         {selectedElement ? (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+            {/* Status-Card */}
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-              <div className="flex flex-col text-left">
-                <span className="text-xs font-bold text-slate-800 tracking-tight leading-none mb-1">Status</span>
-                <span className="text-[10px] text-slate-400">{selectedElement.isLocked ? 'Fixiert' : 'Beweglich'}</span>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-slate-800 tracking-tight leading-none mb-1 text-left">Element-Status</span>
+                <span className="text-[10px] text-slate-400 text-left">{selectedElement.isLocked ? 'Position fixiert' : 'Beweglich'}</span>
               </div>
               <button 
                 onClick={() => updateElement(selectedElement.id, { isLocked: !selectedElement.isLocked })}
@@ -191,9 +175,10 @@ const App = () => {
               </button>
             </div>
 
+            {/* Content Section */}
             {selectedElement.type === 'text' && (
-              <div className="space-y-3 text-left">
-                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block">Textinhalt</label>
+              <div className="space-y-3">
+                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block text-left">Textinhalt</label>
                 <textarea 
                   className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm h-40 focus:border-indigo-500 outline-none transition-all resize-none shadow-inner bg-slate-50/50"
                   value={selectedElement.content || ""}
@@ -203,17 +188,45 @@ const App = () => {
             )}
             
             {selectedElement.type === 'image' && (
-              <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 text-left">
-                <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest block mb-2">Bildquelle</label>
-                <p className="text-[11px] font-mono text-indigo-600 truncate">{selectedElement.linkedFileName}</p>
-                <p className="text-[9px] text-indigo-400 mt-2 italic">Pfad: {getObjectImageSrc(selectedElement)}</p>
+              <div className="space-y-4">
+                <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 text-left">
+                  <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest block mb-2">Verknüpfte Datei</label>
+                  <p className="text-[11px] font-mono text-indigo-600 truncate">{selectedElement.linkedFileName}</p>
+                </div>
+                
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-left">
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none">Debug-Pfad</label>
+                    <a 
+                      href={`${window.location.origin}${getObjectImageSrc(selectedElement)}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="flex items-center gap-1 text-[10px] text-indigo-600 font-bold hover:underline"
+                    >
+                      Testen <ExternalLink size={10} />
+                    </a>
+                  </div>
+                  <code className="text-[9px] block bg-white p-2 rounded border border-slate-200 break-all text-slate-500 font-mono">
+                    {getObjectImageSrc(selectedElement)}
+                  </code>
+                  <div className="mt-3 p-2 bg-white rounded border border-slate-200 space-y-2">
+                    <p className="text-[9px] text-slate-500 font-bold flex items-center gap-1">
+                      <Search size={10} /> Checkliste für 404 Fehler:
+                    </p>
+                    <ul className="text-[8px] text-slate-400 space-y-1 list-disc pl-3">
+                      <li>Datei auf GitHub im Ordner <code className="bg-slate-50 px-1 italic">/public</code>?</li>
+                      <li>Kleinschreibung beachtet (<code className="bg-slate-50 px-1 italic">.png</code> vs <code className="bg-slate-50 px-1 italic">.PNG</code>)?</li>
+                      <li>Vercel-Build abgeschlossen (Deployment: Ready)?</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 opacity-40">
             <Layers size={32} />
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4 leading-relaxed">Bitte Element wählen</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4">Wähle ein Element</p>
           </div>
         )}
       </aside>
@@ -228,7 +241,7 @@ const App = () => {
               <span className="text-sm font-bold tracking-tight text-slate-800">{project.name}</span>
           </div>
           <button className="flex items-center gap-2 px-8 py-2.5 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg active:scale-95">
-            <Save size={16} /> Speichern
+            <Save size={16} /> Entwurf speichern
           </button>
         </header>
 
@@ -242,7 +255,6 @@ const App = () => {
                 transformOrigin: 'top center'
             }}
           >
-            {/* Bleed-Anzeige */}
             {showBleed && (
               <div 
                 className="absolute inset-0 border-red-500/20 border-dashed pointer-events-none z-50"
@@ -255,7 +267,6 @@ const App = () => {
               />
             )}
 
-            {/* Objekte-Renderer */}
             {pageObjects.map(obj => (
               <div
                 key={obj.id}
@@ -270,16 +281,20 @@ const App = () => {
                 }}
               >
                 {obj.type === 'image' ? (
-                  <div className="relative w-full h-full bg-slate-50">
+                  <div className="relative w-full h-full bg-slate-50 group">
                     <img 
                       src={getObjectImageSrc(obj)}
                       alt={obj.id}
-                      className="absolute max-w-none pointer-events-none"
+                      className="absolute max-w-none pointer-events-none transition-opacity duration-300 opacity-0"
                       style={{
                         top: obj.contentTransform ? `${obj.contentTransform.topOffset}px` : 0,
                         left: obj.contentTransform ? `${obj.contentTransform.leftOffset}px` : 0,
                         width: obj.contentTransform ? `${obj.contentTransform.contentWidth}px` : '100%',
                         height: obj.contentTransform ? `${obj.contentTransform.contentHeight}px` : 'auto',
+                      }}
+                      onLoad={(e) => {
+                        e.target.classList.remove('opacity-0');
+                        e.target.nextSibling.style.display = 'none';
                       }}
                       onError={(e) => {
                         e.target.style.display = 'none';
@@ -287,9 +302,10 @@ const App = () => {
                       }}
                     />
                     {/* Platzhalter wenn Bild fehlt */}
-                    <div className="hidden absolute inset-0 flex flex-col items-center justify-center p-2 border border-slate-100 text-slate-300">
-                        <span className="text-[10px] uppercase font-bold tracking-widest mb-1 opacity-50 italic">Bild fehlt</span>
-                        <span className="text-[8px] font-mono break-all text-center px-4 leading-tight">{obj.linkedFileName}</span>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-2 border border-slate-100 bg-slate-50 text-slate-300">
+                        <ImageIcon size={24} className="mb-2 opacity-20" />
+                        <span className="text-[9px] uppercase font-bold tracking-widest mb-1 opacity-50 italic text-center">Bild fehlt</span>
+                        <span className="text-[7px] font-mono break-all text-center px-4 leading-tight opacity-40 uppercase">{obj.linkedFileName}</span>
                     </div>
                   </div>
                 ) : (
