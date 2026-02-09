@@ -5,12 +5,10 @@ import {
 } from 'lucide-react';
 
 /**
- * LOKALE TEST-DATEN (MOCK DATA)
- * Falls n8n nicht erreichbar ist, nutzt der Editor diese Daten.
- * So kannst du jederzeit entwickeln, auch ohne Internet/Server.
+ * MOCK_PROJECT: Statische Fallback-Daten mit Image-Beispiel
  */
 const MOCK_PROJECT = {
-  name: "Karte 29009 (Lokal)",
+  name: "Karte 29009 (Vorschau)",
   pages: {
     page_0: {
       id: "page_0",
@@ -28,7 +26,7 @@ const MOCK_PROJECT = {
       left: 350,
       width: 200,
       height: 50,
-      content: "Herzliche Grüße\nvon deinem Verlag",
+      content: "Herzliche Grüße\n(Mock-Daten)",
       fontSize: 18,
       fontFamily: "Arial",
       isLocked: true,
@@ -42,6 +40,12 @@ const MOCK_PROJECT = {
       width: 150,
       height: 150,
       linkedFileName: "25002.png",
+      contentTransform: {
+        topOffset: -10,
+        leftOffset: -10,
+        contentWidth: 170,
+        contentHeight: 170
+      },
       isLocked: true,
       layer: "bearbeitung"
     }
@@ -51,42 +55,40 @@ const MOCK_PROJECT = {
 const App = () => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [showBleed, setShowBleed] = useState(true);
-  const [isOffline, setIsOffline] = useState(false);
+  const [status, setStatus] = useState('loading');
+  const [artNr, setArtNr] = useState('29009');
 
   const N8N_API_URL = "https://n8n-f8jg4-u44283.vm.elestio.app/webhook/get-template";
 
   useEffect(() => {
     const fetchData = async () => {
       const params = new URLSearchParams(window.location.search);
-      const artNr = params.get('artNr') || '29009';
+      const currentArtNr = params.get('artNr') || '29009';
+      setArtNr(currentArtNr);
 
       try {
         setLoading(true);
-        const response = await fetch(`${N8N_API_URL}?artNr=${artNr}`);
+        const response = await fetch(`${N8N_API_URL}?artNr=${currentArtNr}`);
         
-        if (!response.ok) throw new Error("Server nicht erreichbar");
+        if (!response.ok) throw new Error("API-Verbindung fehlgeschlagen");
         
         const data = await response.json();
         const dbResult = Array.isArray(data) ? data[0] : data;
         
-        if (!dbResult || !dbResult.canvas_data) throw new Error("Keine Daten");
+        if (!dbResult || !dbResult.canvas_data) throw new Error("Keine Daten gefunden");
 
         setProject({
           activePage: 'page_0',
           ...dbResult.canvas_data.project
         });
-        setLoading(false);
+        setStatus('live');
       } catch (err) {
-        console.warn("API Fehler, wechsle in lokalen Modus:", err.message);
-        // FALLBACK: Wenn Server nicht geht, nimm die fixen Daten
-        setProject({
-          activePage: 'page_0',
-          ...MOCK_PROJECT
-        });
-        setIsOffline(true);
+        console.warn("Nutze Offline-Fallback:", err.message);
+        setProject({ activePage: 'page_0', ...MOCK_PROJECT });
+        setStatus('local');
+      } finally {
         setLoading(false);
       }
     };
@@ -106,9 +108,9 @@ const App = () => {
   };
 
   if (loading) return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-white gap-4 text-slate-500 font-sans">
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-white gap-4 text-slate-400 font-sans">
       <Loader2 className="animate-spin text-indigo-600" size={40} />
-      <p className="font-medium animate-pulse">Initialisiere Editor...</p>
+      <p className="font-medium animate-pulse tracking-tight text-sm">Initialisiere RSP Editor...</p>
     </div>
   );
 
@@ -118,11 +120,11 @@ const App = () => {
 
   return (
     <div className="flex h-screen bg-slate-100 font-sans text-slate-900 overflow-hidden text-left">
-      {/* Sidebar */}
+      {/* Sidebar Navigation */}
       <aside className="w-16 bg-slate-900 flex flex-col items-center py-6 gap-6 text-slate-400 shadow-2xl">
         <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold mb-4 italic shadow-lg">RSP</div>
         <button className="p-2 text-white border-b-2 border-indigo-500">1</button>
-        <div className="mt-auto border-t border-slate-700 pt-6 text-center">
+        <div className="mt-auto border-t border-slate-700 pt-6">
            <button onClick={() => setShowBleed(!showBleed)} className={`p-2 rounded-md transition-all ${showBleed ? 'text-indigo-400 bg-slate-800' : 'hover:text-white'}`}>
             {showBleed ? <Eye size={20} /> : <EyeOff size={20} />}
           </button>
@@ -133,24 +135,25 @@ const App = () => {
       <aside className="w-80 bg-white border-l border-slate-200 p-6 shadow-xl z-10 overflow-y-auto">
         <div className="flex items-center gap-2 mb-8">
           <Settings2 size={16} className="text-indigo-600" />
-          <h2 className="font-bold uppercase text-[10px] tracking-[0.2em] text-slate-400">Eigenschaften</h2>
+          <h2 className="font-bold uppercase text-[10px] tracking-[0.2em] text-slate-400">Editor</h2>
         </div>
 
-        {isOffline && (
-          <div className="mb-6 p-3 bg-amber-50 border border-amber-100 rounded-xl flex gap-3 text-amber-700 items-start">
+        {status === 'local' && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex gap-3 text-amber-800 items-start shadow-sm">
             <Info size={16} className="shrink-0 mt-0.5" />
-            <p className="text-[10px] leading-relaxed font-medium">
-              <strong>Offline-Modus:</strong> Keine Verbindung zu n8n möglich. Es werden lokale Testdaten verwendet.
-            </p>
+            <div className="text-[10px] leading-tight opacity-90">
+              <p className="font-bold mb-1 uppercase">Vorschau-Modus</p>
+              Keine Verbindung zum n8n-Server. Bilder werden lokal unter /assets/ gesucht.
+            </div>
           </div>
         )}
 
         {selectedElement ? (
-          <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300 text-left">
+          <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
               <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-800 tracking-tight">Status</span>
-                <span className="text-[10px] text-slate-400">{selectedElement.isLocked ? 'Position fixiert' : 'Beweglich'}</span>
+                <span className="text-xs font-bold text-slate-800">Element-Sperre</span>
+                <span className="text-[10px] text-slate-400">{selectedElement.isLocked ? 'Position fixiert' : 'Frei beweglich'}</span>
               </div>
               <button 
                 onClick={() => updateElement(selectedElement.id, { isLocked: !selectedElement.isLocked })}
@@ -162,7 +165,7 @@ const App = () => {
 
             {selectedElement.type === 'text' && (
               <div className="space-y-3">
-                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block text-left">Textinhalt</label>
+                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block">Text bearbeiten</label>
                 <textarea 
                   className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm h-40 focus:border-indigo-500 outline-none transition-all resize-none shadow-inner bg-slate-50/50"
                   value={selectedElement.content || ""}
@@ -170,20 +173,30 @@ const App = () => {
                 />
               </div>
             )}
+            
+            {selectedElement.type === 'image' && (
+              <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+                <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest block mb-2">Bild-Info</label>
+                <p className="text-[11px] font-mono text-indigo-600 truncate">{selectedElement.linkedFileName}</p>
+                <p className="text-[9px] text-indigo-400 mt-2 italic">Hinweis: Bild wird basierend auf InDesign-Daten skaliert.</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 opacity-40">
             <Layers size={32} />
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4">Wähle ein Element</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4">Wähle ein Element zum Bearbeiten</p>
           </div>
         )}
       </aside>
 
-      {/* Hauptbereich */}
+      {/* Editor-Zentrum */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20 shadow-sm text-left">
-          <div className="flex flex-col">
-              <span className="text-[10px] uppercase font-bold text-indigo-600 tracking-widest leading-none mb-1">Status: {isOffline ? 'Lokal' : 'Live'}</span>
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20 shadow-sm">
+          <div className="flex flex-col text-left">
+              <span className={`text-[10px] uppercase font-bold tracking-widest leading-none mb-1 ${status === 'local' ? 'text-amber-500' : 'text-indigo-600'}`}>
+                {status === 'local' ? 'Offline-Vorschau' : 'Live-Verbindung'}
+              </span>
               <span className="text-sm font-bold tracking-tight text-slate-800">{project.name}</span>
           </div>
           <button className="flex items-center gap-2 px-8 py-2.5 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg active:scale-95">
@@ -201,6 +214,7 @@ const App = () => {
                 transformOrigin: 'top center'
             }}
           >
+            {/* Bleed-Anzeige */}
             {showBleed && (
               <div 
                 className="absolute inset-0 border-red-500/20 border-dashed pointer-events-none z-50"
@@ -213,6 +227,7 @@ const App = () => {
               />
             )}
 
+            {/* Objekte-Renderer */}
             {pageObjects.map(obj => (
               <div
                 key={obj.id}
@@ -223,13 +238,30 @@ const App = () => {
                   left: `${obj.left}px`,
                   width: `${obj.width}px`,
                   height: `${obj.height}px`,
-                  overflow: 'hidden'
+                  overflow: 'hidden' // Wichtig für Bildbeschnitt
                 }}
               >
                 {obj.type === 'image' ? (
-                  <div className="relative w-full h-full bg-slate-50 flex flex-col items-center justify-center p-2 border border-slate-100">
-                    <div className="text-[10px] text-slate-400 text-center break-all font-mono leading-tight">
-                        {obj.linkedFileName}
+                  <div className="relative w-full h-full bg-slate-50">
+                    <img 
+                      src={`/assets/${artNr}/${obj.linkedFileName}`}
+                      alt={obj.id}
+                      className="absolute max-w-none pointer-events-none"
+                      style={{
+                        top: obj.contentTransform ? `${obj.contentTransform.topOffset}px` : 0,
+                        left: obj.contentTransform ? `${obj.contentTransform.leftOffset}px` : 0,
+                        width: obj.contentTransform ? `${obj.contentTransform.contentWidth}px` : '100%',
+                        height: obj.contentTransform ? `${obj.contentTransform.contentHeight}px` : 'auto',
+                      }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    {/* Fallback-Platzhalter */}
+                    <div className="hidden absolute inset-0 flex flex-col items-center justify-center p-2 border border-slate-100 text-slate-300">
+                        <span className="text-[10px] uppercase font-bold tracking-widest mb-1 opacity-50 italic text-left">Bild fehlt</span>
+                        <span className="text-[8px] font-mono break-all text-center">{obj.linkedFileName}</span>
                     </div>
                   </div>
                 ) : (
@@ -242,6 +274,11 @@ const App = () => {
                     padding: '2px'
                   }}>
                     {obj.content}
+                  </div>
+                )}
+                {obj.isLocked && selectedId === obj.id && (
+                  <div className="absolute top-1 right-1 p-1 bg-amber-500 text-white rounded shadow-sm scale-75">
+                    <Lock size={12}/>
                   </div>
                 )}
               </div>
