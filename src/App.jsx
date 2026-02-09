@@ -5,21 +5,32 @@ import {
 } from 'lucide-react';
 
 /**
- * MOCK_PROJECT: Statische Fallback-Daten mit Image-Beispiel
- * Wird genutzt, wenn n8n nicht erreichbar ist.
+ * MOCK_PROJECT: Erweitert um Szenario A & B Beispiele
  */
 const MOCK_PROJECT = {
-  name: "Karte 29009 (Vorschau-Modus)",
+  name: "Karte 29009 (Vorschau)",
   pages: {
     page_0: {
       id: "page_0",
       width: 612.28,
       height: 306.14,
-      objectsIds: ["Text_Vorne", "Bild_Klee"],
+      objectsIds: ["Front_Motiv", "Text_Vorne", "Bild_Klee"],
       boxes: { trimbox: { top: 8.5, right: 8.5, bottom: 8.5, left: 8.5 } }
     }
   },
   objects: {
+    "Front_Motiv": {
+      id: "Front_Motiv",
+      type: "image",
+      top: 0,
+      left: 306, // Rechte Seite der Klappkarte
+      width: 306,
+      height: 306,
+      linkedFileName: "placeholder.jpg",
+      metadata: { "editor:dynamic-source": "auto_filename" },
+      isLocked: true,
+      layer: "unten"
+    },
     "Text_Vorne": {
       id: "Text_Vorne",
       type: "text",
@@ -36,16 +47,16 @@ const MOCK_PROJECT = {
     "Bild_Klee": {
       id: "Bild_Klee",
       type: "image",
-      top: 50,
+      top: 200,
       left: 50,
-      width: 150,
-      height: 150,
+      width: 80,
+      height: 80,
       linkedFileName: "25002.png",
       contentTransform: {
-        topOffset: -10,
-        leftOffset: -10,
-        contentWidth: 170,
-        contentHeight: 170
+        topOffset: 0,
+        leftOffset: 0,
+        contentWidth: 80,
+        contentHeight: 80
       },
       isLocked: true,
       layer: "bearbeitung"
@@ -58,7 +69,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [showBleed, setShowBleed] = useState(true);
-  const [status, setStatus] = useState('loading'); // 'live' oder 'local'
+  const [status, setStatus] = useState('loading'); 
   const [artNr, setArtNr] = useState('29009');
 
   const N8N_API_URL = "https://n8n-f8jg4-u44283.vm.elestio.app/webhook/get-template";
@@ -78,7 +89,7 @@ const App = () => {
         const data = await response.json();
         const dbResult = Array.isArray(data) ? data[0] : data;
         
-        if (!dbResult || !dbResult.canvas_data) throw new Error("Keine Daten in DB gefunden");
+        if (!dbResult || !dbResult.canvas_data) throw new Error("Keine Daten gefunden");
 
         setProject({
           activePage: 'page_0',
@@ -86,11 +97,8 @@ const App = () => {
         });
         setStatus('live');
       } catch (err) {
-        console.warn("API nicht erreichbar, wechsle in lokalen Modus:", err.message);
-        setProject({
-          activePage: 'page_0',
-          ...MOCK_PROJECT
-        });
+        console.warn("Nutze Offline-Fallback:", err.message);
+        setProject({ activePage: 'page_0', ...MOCK_PROJECT });
         setStatus('local');
       } finally {
         setLoading(false);
@@ -99,6 +107,22 @@ const App = () => {
 
     fetchData();
   }, []);
+
+  /**
+   * Intelligente Bildpfad-Auflösung
+   * Unterscheidet zwischen Szenario A (Global) und Szenario B (Lokal)
+   */
+  const getObjectImageSrc = (obj) => {
+    if (obj.type !== 'image') return null;
+    
+    // Szenario A: Globales Format-Asset (z.B. Vorderseiten)
+    if (obj.metadata && obj.metadata['editor:dynamic-source'] === 'auto_filename') {
+      return `/assets/216x108/${artNr}.jpg`;
+    }
+    
+    // Szenario B: Lokales Produkt-Asset (z.B. Klee, Logos)
+    return `/assets/${artNr}/${obj.linkedFileName}`;
+  };
 
   const updateElement = (id, updates) => {
     if (!project) return;
@@ -114,7 +138,7 @@ const App = () => {
   if (loading) return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-white gap-4 text-slate-400 font-sans">
       <Loader2 className="animate-spin text-indigo-600" size={40} />
-      <p className="font-medium animate-pulse tracking-tight text-sm">Initialisiere RSP Editor...</p>
+      <p className="font-medium animate-pulse tracking-tight text-sm text-left">Initialisiere RSP Editor...</p>
     </div>
   );
 
@@ -139,7 +163,7 @@ const App = () => {
       <aside className="w-80 bg-white border-l border-slate-200 p-6 shadow-xl z-10 overflow-y-auto">
         <div className="flex items-center gap-2 mb-8">
           <Settings2 size={16} className="text-indigo-600" />
-          <h2 className="font-bold uppercase text-[10px] tracking-[0.2em] text-slate-400">Editor</h2>
+          <h2 className="font-bold uppercase text-[10px] tracking-[0.2em] text-slate-400 text-left">Eigenschaften</h2>
         </div>
 
         {status === 'local' && (
@@ -147,7 +171,7 @@ const App = () => {
             <Info size={16} className="shrink-0 mt-0.5" />
             <div className="text-[10px] leading-tight opacity-90 text-left">
               <p className="font-bold mb-1 uppercase tracking-tight">Offline-Vorschau</p>
-              Daten kommen aus dem lokalen Speicher. Bilder müssen im Ordner /assets/ liegen.
+              Daten werden lokal simuliert.
             </div>
           </div>
         )}
@@ -156,8 +180,8 @@ const App = () => {
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
               <div className="flex flex-col text-left">
-                <span className="text-xs font-bold text-slate-800">Element-Sperre</span>
-                <span className="text-[10px] text-slate-400">{selectedElement.isLocked ? 'Position fixiert' : 'Frei beweglich'}</span>
+                <span className="text-xs font-bold text-slate-800 tracking-tight leading-none mb-1">Status</span>
+                <span className="text-[10px] text-slate-400">{selectedElement.isLocked ? 'Fixiert' : 'Beweglich'}</span>
               </div>
               <button 
                 onClick={() => updateElement(selectedElement.id, { isLocked: !selectedElement.isLocked })}
@@ -169,7 +193,7 @@ const App = () => {
 
             {selectedElement.type === 'text' && (
               <div className="space-y-3 text-left">
-                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block">Text bearbeiten</label>
+                <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block">Textinhalt</label>
                 <textarea 
                   className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm h-40 focus:border-indigo-500 outline-none transition-all resize-none shadow-inner bg-slate-50/50"
                   value={selectedElement.content || ""}
@@ -180,31 +204,31 @@ const App = () => {
             
             {selectedElement.type === 'image' && (
               <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 text-left">
-                <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest block mb-2">Bild-Info</label>
+                <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest block mb-2">Bildquelle</label>
                 <p className="text-[11px] font-mono text-indigo-600 truncate">{selectedElement.linkedFileName}</p>
-                <p className="text-[9px] text-indigo-400 mt-2 italic">Hinweis: Bild wird basierend auf InDesign-Daten skaliert.</p>
+                <p className="text-[9px] text-indigo-400 mt-2 italic">Pfad: {getObjectImageSrc(selectedElement)}</p>
               </div>
             )}
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 opacity-40">
             <Layers size={32} />
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4 leading-relaxed">Bitte wählen Sie ein Element zum Bearbeiten</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4 leading-relaxed">Bitte Element wählen</p>
           </div>
         )}
       </aside>
 
-      {/* Editor-Zentrum */}
+      {/* Hauptbereich */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20 shadow-sm">
-          <div className="flex flex-col text-left">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20 shadow-sm text-left">
+          <div className="flex flex-col">
               <span className={`text-[10px] uppercase font-bold tracking-widest leading-none mb-1 ${status === 'local' ? 'text-amber-500' : 'text-indigo-600'}`}>
                 {status === 'local' ? 'Status: Lokal' : 'Status: Live'}
               </span>
               <span className="text-sm font-bold tracking-tight text-slate-800">{project.name}</span>
           </div>
           <button className="flex items-center gap-2 px-8 py-2.5 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg active:scale-95">
-            <Save size={16} /> Entwurf speichern
+            <Save size={16} /> Speichern
           </button>
         </header>
 
@@ -242,14 +266,13 @@ const App = () => {
                   left: `${obj.left}px`,
                   width: `${obj.width}px`,
                   height: `${obj.height}px`,
-                  overflow: 'hidden' // Wichtig für Bildbeschnitt
+                  overflow: 'hidden' 
                 }}
               >
                 {obj.type === 'image' ? (
                   <div className="relative w-full h-full bg-slate-50">
                     <img 
-                      /* HINWEIS: 'public' wird im Pfad weggelassen, da Vite den public-Ordner als Root nutzt */
-                      src={`/assets/${artNr}/${obj.linkedFileName}`}
+                      src={getObjectImageSrc(obj)}
                       alt={obj.id}
                       className="absolute max-w-none pointer-events-none"
                       style={{
@@ -263,10 +286,10 @@ const App = () => {
                         e.target.nextSibling.style.display = 'flex';
                       }}
                     />
-                    {/* Fallback-Platzhalter */}
+                    {/* Platzhalter wenn Bild fehlt */}
                     <div className="hidden absolute inset-0 flex flex-col items-center justify-center p-2 border border-slate-100 text-slate-300">
                         <span className="text-[10px] uppercase font-bold tracking-widest mb-1 opacity-50 italic">Bild fehlt</span>
-                        <span className="text-[8px] font-mono break-all text-center px-4">{obj.linkedFileName}</span>
+                        <span className="text-[8px] font-mono break-all text-center px-4 leading-tight">{obj.linkedFileName}</span>
                     </div>
                   </div>
                 ) : (
