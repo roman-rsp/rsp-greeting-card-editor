@@ -6,9 +6,10 @@ import {
 
 /**
  * MOCK_PROJECT: Statische Fallback-Daten mit Image-Beispiel
+ * Wird genutzt, wenn n8n nicht erreichbar ist.
  */
 const MOCK_PROJECT = {
-  name: "Karte 29009 (Vorschau)",
+  name: "Karte 29009 (Vorschau-Modus)",
   pages: {
     page_0: {
       id: "page_0",
@@ -57,7 +58,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
   const [showBleed, setShowBleed] = useState(true);
-  const [status, setStatus] = useState('loading');
+  const [status, setStatus] = useState('loading'); // 'live' oder 'local'
   const [artNr, setArtNr] = useState('29009');
 
   const N8N_API_URL = "https://n8n-f8jg4-u44283.vm.elestio.app/webhook/get-template";
@@ -77,7 +78,7 @@ const App = () => {
         const data = await response.json();
         const dbResult = Array.isArray(data) ? data[0] : data;
         
-        if (!dbResult || !dbResult.canvas_data) throw new Error("Keine Daten gefunden");
+        if (!dbResult || !dbResult.canvas_data) throw new Error("Keine Daten in DB gefunden");
 
         setProject({
           activePage: 'page_0',
@@ -85,8 +86,11 @@ const App = () => {
         });
         setStatus('live');
       } catch (err) {
-        console.warn("Nutze Offline-Fallback:", err.message);
-        setProject({ activePage: 'page_0', ...MOCK_PROJECT });
+        console.warn("API nicht erreichbar, wechsle in lokalen Modus:", err.message);
+        setProject({
+          activePage: 'page_0',
+          ...MOCK_PROJECT
+        });
         setStatus('local');
       } finally {
         setLoading(false);
@@ -141,9 +145,9 @@ const App = () => {
         {status === 'local' && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex gap-3 text-amber-800 items-start shadow-sm">
             <Info size={16} className="shrink-0 mt-0.5" />
-            <div className="text-[10px] leading-tight opacity-90">
-              <p className="font-bold mb-1 uppercase">Vorschau-Modus</p>
-              Keine Verbindung zum n8n-Server. Bilder werden lokal unter /assets/ gesucht.
+            <div className="text-[10px] leading-tight opacity-90 text-left">
+              <p className="font-bold mb-1 uppercase tracking-tight">Offline-Vorschau</p>
+              Daten kommen aus dem lokalen Speicher. Bilder müssen im Ordner /assets/ liegen.
             </div>
           </div>
         )}
@@ -151,7 +155,7 @@ const App = () => {
         {selectedElement ? (
           <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-              <div className="flex flex-col">
+              <div className="flex flex-col text-left">
                 <span className="text-xs font-bold text-slate-800">Element-Sperre</span>
                 <span className="text-[10px] text-slate-400">{selectedElement.isLocked ? 'Position fixiert' : 'Frei beweglich'}</span>
               </div>
@@ -164,7 +168,7 @@ const App = () => {
             </div>
 
             {selectedElement.type === 'text' && (
-              <div className="space-y-3">
+              <div className="space-y-3 text-left">
                 <label className="text-[10px] uppercase font-bold text-slate-400 tracking-widest block">Text bearbeiten</label>
                 <textarea 
                   className="w-full border-2 border-slate-100 rounded-2xl p-4 text-sm h-40 focus:border-indigo-500 outline-none transition-all resize-none shadow-inner bg-slate-50/50"
@@ -175,7 +179,7 @@ const App = () => {
             )}
             
             {selectedElement.type === 'image' && (
-              <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50">
+              <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 text-left">
                 <label className="text-[10px] uppercase font-bold text-indigo-400 tracking-widest block mb-2">Bild-Info</label>
                 <p className="text-[11px] font-mono text-indigo-600 truncate">{selectedElement.linkedFileName}</p>
                 <p className="text-[9px] text-indigo-400 mt-2 italic">Hinweis: Bild wird basierend auf InDesign-Daten skaliert.</p>
@@ -185,7 +189,7 @@ const App = () => {
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-slate-300 gap-4 opacity-40">
             <Layers size={32} />
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4">Wähle ein Element zum Bearbeiten</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-center px-4 leading-relaxed">Bitte wählen Sie ein Element zum Bearbeiten</p>
           </div>
         )}
       </aside>
@@ -195,12 +199,12 @@ const App = () => {
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 z-20 shadow-sm">
           <div className="flex flex-col text-left">
               <span className={`text-[10px] uppercase font-bold tracking-widest leading-none mb-1 ${status === 'local' ? 'text-amber-500' : 'text-indigo-600'}`}>
-                {status === 'local' ? 'Offline-Vorschau' : 'Live-Verbindung'}
+                {status === 'local' ? 'Status: Lokal' : 'Status: Live'}
               </span>
               <span className="text-sm font-bold tracking-tight text-slate-800">{project.name}</span>
           </div>
           <button className="flex items-center gap-2 px-8 py-2.5 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-indigo-600 transition-all shadow-lg active:scale-95">
-            <Save size={16} /> Speichern
+            <Save size={16} /> Entwurf speichern
           </button>
         </header>
 
@@ -260,8 +264,8 @@ const App = () => {
                     />
                     {/* Fallback-Platzhalter */}
                     <div className="hidden absolute inset-0 flex flex-col items-center justify-center p-2 border border-slate-100 text-slate-300">
-                        <span className="text-[10px] uppercase font-bold tracking-widest mb-1 opacity-50 italic text-left">Bild fehlt</span>
-                        <span className="text-[8px] font-mono break-all text-center">{obj.linkedFileName}</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest mb-1 opacity-50 italic">Bild fehlt</span>
+                        <span className="text-[8px] font-mono break-all text-center px-4">{obj.linkedFileName}</span>
                     </div>
                   </div>
                 ) : (
