@@ -248,6 +248,7 @@ const App = () => {
                 {obj.type === 'image' ? (
                   <div className="relative w-full h-full bg-slate-50">
                     <img 
+                      /* HINWEIS: 'public' wird im Pfad weggelassen, da Vite den public-Ordner als Root nutzt */
                       src={`/assets/${artNr}/${obj.linkedFileName}`}
                       alt={obj.id}
                       className="absolute max-w-none pointer-events-none"
