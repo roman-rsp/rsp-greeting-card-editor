@@ -6,50 +6,50 @@ import {
 
 /**
  * MOCK_PROJECT: Lokale Testdaten
- * Korrektur: Name ist nun konsistent '2502.png' (wie in deiner 29009_data.json).
+ * Diese Daten werden angezeigt, wenn die n8n-Schnittstelle nicht erreichbar ist.
  */
 const MOCK_PROJECT = {
-  name: "Karte 29009 (Vorschau)",
+  name: "Karte 29009 (Vorschau-Modus)",
   pages: {
     page_0: {
       id: "page_0",
       width: 612.28,
       height: 306.14,
-      objectsIds: ["Front_Motiv", "Text_Vorne", "Bild_Klee"],
+      objectsIds: ["Hintergrund_Motiv", "Text_Haupt", "Bild_Klee"],
       boxes: { trimbox: { top: 8.5, right: 8.5, bottom: 8.5, left: 8.5 } }
     }
   },
   objects: {
-    "Front_Motiv": {
-      id: "Front_Motiv",
+    "Hintergrund_Motiv": {
+      id: "Hintergrund_Motiv",
       type: "image",
       top: 0,
       left: 306,
       width: 306,
       height: 306,
-      linkedFileName: "placeholder.jpg",
+      linkedFileName: "vorderseite.jpg",
       metadata: { "editor:dynamic-source": "auto_filename" },
       isLocked: true,
       layer: "unten"
     },
-    "Text_Vorne": {
-      id: "Text_Vorne",
+    "Text_Haupt": {
+      id: "Text_Haupt",
       type: "text",
-      top: 100,
-      left: 350,
-      width: 200,
-      height: 50,
-      content: "Herzliche Grüße\n(Mock-Daten)",
-      fontSize: 18,
+      top: 120,
+      left: 340,
+      width: 240,
+      height: 60,
+      content: "Herzliche Grüße zum Jubiläum!",
+      fontSize: 22,
       fontFamily: "Arial",
-      isLocked: true,
+      isLocked: false,
       layer: "bearbeitung"
     },
     "Bild_Klee": {
       id: "Bild_Klee",
       type: "image",
-      top: 200,
-      left: 50,
+      top: 210,
+      left: 30,
       width: 80,
       height: 80,
       linkedFileName: "2502.png", 
@@ -234,8 +234,9 @@ const App = () => {
         </header>
 
         <div className="flex-1 overflow-auto bg-slate-200 p-20 flex items-start justify-center custom-scrollbar">
+          {/* Die eigentliche Karte */}
           <div 
-            className="bg-white shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] relative transition-all duration-500"
+            className="bg-white shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] relative transition-all duration-500 border border-slate-300"
             style={{ 
                 width: `${currentPage.width}px`, 
                 height: `${currentPage.height}px`,
@@ -243,6 +244,7 @@ const App = () => {
                 transformOrigin: 'top center'
             }}
           >
+            {/* Beschnitt-Rahmen (Bleed) */}
             {showBleed && (
               <div 
                 className="absolute inset-0 border-red-500/20 border-dashed pointer-events-none z-50"
@@ -255,11 +257,12 @@ const App = () => {
               />
             )}
 
+            {/* Objekte-Renderer */}
             {pageObjects.map(obj => (
               <div
                 key={obj.id}
                 onClick={() => setSelectedId(obj.id)}
-                className={`absolute cursor-pointer transition-all duration-200 text-left ${selectedId === obj.id ? 'ring-2 ring-indigo-500 z-20 shadow-xl' : 'hover:ring-1 hover:ring-indigo-300 z-10'}`}
+                className={`absolute cursor-pointer transition-all duration-200 text-left ${selectedId === obj.id ? 'ring-2 ring-indigo-500 z-20 shadow-xl bg-indigo-50/10' : 'hover:ring-1 hover:ring-indigo-300 z-10'}`}
                 style={{
                   top: `${obj.top}px`,
                   left: `${obj.left}px`,
@@ -269,7 +272,7 @@ const App = () => {
                 }}
               >
                 {obj.type === 'image' ? (
-                  <div className="relative w-full h-full bg-slate-50 group">
+                  <div className="relative w-full h-full group">
                     <img 
                       src={getObjectImageSrc(obj)}
                       alt={obj.id}
