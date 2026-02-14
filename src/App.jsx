@@ -8,8 +8,8 @@ import {
 
 /**
  * ECHTDATEN-CHECK (MOCK DATA)
- * Hier habe ich Deine hochgeladene 'wk_innen_1_data.json' eins zu eins eingesetzt.
- * Man sieht jetzt: Der Editor nutzt nur noch das, was im JSON steht.
+ * Basierend auf Deiner hochgeladenen 'wk_innen_1_data.json'.
+ * Hier sind nun die exakten IDs und die Eigenschaft "textAlign": "center" hinterlegt.
  */
 const MOCK_DATA = {
   "wk_motiv": {
@@ -141,7 +141,7 @@ const App = () => {
       <main className="flex-1 flex flex-col relative overflow-hidden">
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-10 z-20 shadow-sm">
           <div className="flex flex-col">
-              <span className="text-[9px] uppercase font-bold text-indigo-600 tracking-[0.3em] mb-1 italic">RSP Editor v3.8.0</span>
+              <span className="text-[9px] uppercase font-bold text-indigo-600 tracking-[0.3em] mb-1 italic">RSP Editor v3.8.1</span>
               <span className="text-sm font-bold text-slate-800 tracking-tight uppercase tracking-widest">Art. {shopContext.artNr} — {activeSide === 'front' ? 'Vorderseite' : 'Innenseite'}</span>
           </div>
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[9px] font-bold uppercase tracking-wider ${dataSource === 'live' ? 'bg-green-50 border-green-100 text-green-600' : 'bg-amber-50 border-amber-100 text-amber-600'}`}>
