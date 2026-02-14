@@ -7,7 +7,7 @@ import {
 
 /**
  * STATISCHE TESTDATEN (MOCK DATA)
- * Basierend auf deinen InDesign-Exporten Motiv_data.json und wk_innen_1_data.json
+ * Aktualisiert auf die ID-Struktur des Skripts v3.7.1 (_p0 Suffixe)
  */
 const MOCK_DATA = {
   "wk_motiv": {
@@ -16,22 +16,22 @@ const MOCK_DATA = {
       "pages": {
         "page_0": {
           "id": "page_0", "width": 595.27, "height": 595.27,
-          "objectsIds": ["Block_296", "Block_302", "Block_293"],
+          "objectsIds": ["Block_296_p0", "Block_302_p0", "Block_293_p0"],
           "boxes": { "trimbox": { "top": 8.5, "right": 8.5, "bottom": 8.5, "left": 8.5 } }
         }
       },
       "objects": {
-        "Block_296": {
-          "id": "Block_296", "type": "image", "top": -8.48, "left": -8.48, "width": 612.24, "height": 612.24,
-          "layer": "bearbeitung", "metadata": { "editor:dynamic-source": "auto_filename" }, "isLocked": true
+        "Block_296_p0": {
+          "id": "Block_296_p0", "type": "image", "top": -8.48, "left": -8.48, "width": 612.24, "height": 612.24,
+          "layer": "bearbeitung", "metadata": { "editor:dynamic-source": "auto_filename" }, "isLocked": true, "zIndex": 10
         },
-        "Block_302": {
-          "id": "Block_302", "type": "text", "top": 50, "left": 50, "width": 200, "height": 40,
-          "layer": "bearbeitung", "content": "Frohes Fest", "fontSize": 24, "fontFamily": "Poppins"
+        "Block_302_p0": {
+          "id": "Block_302_p0", "type": "text", "top": 150, "left": 50, "width": 400, "height": 60,
+          "layer": "bearbeitung", "content": "Frohes Fest", "fontSize": 32, "fontFamily": "Poppins", "zIndex": 20
         },
-        "Block_293": {
-          "id": "Block_293", "type": "text", "top": 570, "left": 0, "width": 595, "height": 20,
-          "layer": "unten", "content": "www.rsp-kunstverlag.com", "fontSize": 7, "fontFamily": "Poppins Light"
+        "Block_293_p0": {
+          "id": "Block_293_p0", "type": "text", "top": 570, "left": 0, "width": 595, "height": 20,
+          "layer": "unten", "content": "www.rsp-kunstverlag.com", "fontSize": 7, "fontFamily": "Poppins Light", "zIndex": 5
         }
       }
     }
@@ -42,19 +42,19 @@ const MOCK_DATA = {
       "pages": {
         "page_0": {
           "id": "page_0", "width": 595.27, "height": 595.27,
-          "objectsIds": ["Block_451", "Block_322"],
+          "objectsIds": ["Block_451_p0", "Block_322_p0"],
           "boxes": { "trimbox": { "top": 8.5, "right": 8.5, "bottom": 8.5, "left": 8.5 } }
         }
       },
       "objects": {
-        "Block_451": {
-          "id": "Block_451", "type": "text", "top": 100, "left": 50, "width": 500, "height": 100,
+        "Block_451_p0": {
+          "id": "Block_451_p0", "type": "text", "top": 100, "left": 50, "width": 500, "height": 100,
           "layer": "bearbeitung", "content": "Hier steht Ihr individueller Text für die Innenseite.\nZweite Zeile für den Test.",
-          "fontSize": 12, "fontFamily": "Poppins Light"
+          "fontSize": 12, "fontFamily": "Poppins Light", "zIndex": 20
         },
-        "Block_322": {
-          "id": "Block_322", "type": "image", "top": 450, "left": 450, "width": 100, "height": 100,
-          "layer": "bearbeitung", "linkedFileName": "logo.png"
+        "Block_322_p0": {
+          "id": "Block_322_p0", "type": "image", "top": 450, "left": 450, "width": 100, "height": 100,
+          "layer": "bearbeitung", "linkedFileName": "logo.png", "zIndex": 10
         }
       }
     }
@@ -78,9 +78,14 @@ const App = () => {
   const ASSET_SERVER = "https://bilderserver.rsp-kunstverlag.com"; 
   const N8N_API_URL = "https://n8n-f8jg4-u44283.vm.elestio.app/webhook/get-template";
 
+  // Hilfsfunktion: Bereinigt InDesign-Schriftnamen (entfernt \t)
+  const sanitizeFont = (fontName) => {
+    if (!fontName) return 'sans-serif';
+    return fontName.replace(/\t/g, ' ');
+  };
+
   const fetchTemplate = useCallback(async (templateId) => {
     try {
-      // Versuch, echte Daten zu laden
       const response = await fetch(`${N8N_API_URL}?artNr=${templateId}`);
       if (!response.ok) throw new Error("API nicht erreichbar");
       const data = await response.json();
@@ -88,7 +93,6 @@ const App = () => {
       return result.canvas_data.project;
     } catch (err) {
       console.warn(`Nutze statisches Backup für: ${templateId}`);
-      // Fallback auf unsere MOCK_DATA
       return MOCK_DATA[templateId]?.project || null;
     }
   }, []);
@@ -140,7 +144,7 @@ const App = () => {
   if (loading) return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50">
       <Loader2 className="animate-spin text-indigo-600 mb-4" size={48} />
-      <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-slate-400">Layout-Engine wird initialisiert (Statik-Modus aktiv)</p>
+      <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-slate-400">Layout-Engine wird initialisiert...</p>
     </div>
   );
 
@@ -148,7 +152,11 @@ const App = () => {
   if (!currentData) return <div className="p-20">Fehler beim Laden der Vorlage.</div>;
 
   const currentPage = currentData.pages['page_0'];
-  const objects = currentPage.objectsIds.map(id => currentData.objects[id]);
+  // Filtern, um sicherzustellen, dass nur existierende Objekte gemappt werden
+  const objects = currentPage.objectsIds
+    .map(id => currentData.objects[id])
+    .filter(obj => !!obj);
+
   const selectedElement = selectedId ? currentData.objects[selectedId] : null;
 
   return (
@@ -173,7 +181,7 @@ const App = () => {
       <main className="flex-1 flex flex-col relative overflow-hidden">
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-10 z-20 shadow-sm">
           <div className="flex flex-col">
-              <span className="text-[9px] uppercase font-bold text-indigo-600 tracking-[0.3em] mb-1 italic">Entwicklungs-Modus (Statisch)</span>
+              <span className="text-[9px] uppercase font-bold text-indigo-600 tracking-[0.3em] mb-1 italic">Vorschau</span>
               <span className="text-sm font-bold text-slate-800 tracking-tight uppercase">Art. {shopContext.artNr} — {activeSide === 'front' ? 'Vorderseite' : 'Innenseite'}</span>
           </div>
           <button className="flex items-center gap-3 px-10 py-3 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-indigo-600 shadow-xl transition-all active:scale-95 group">
@@ -194,7 +202,14 @@ const App = () => {
             {objects.map(obj => (
               <div key={obj.id} onClick={() => obj.layer !== 'unten' && setSelectedId(obj.id)}
                 className={`absolute transition-all ${obj.layer !== 'unten' ? 'cursor-pointer group' : 'pointer-events-none'} ${selectedId === obj.id ? 'ring-2 ring-indigo-500 z-20 shadow-2xl' : ''}`}
-                style={{ top: `${obj.top}px`, left: `${obj.left}px`, width: `${obj.width}px`, height: `${obj.height}px`, overflow: 'hidden' }}
+                style={{ 
+                  top: `${obj.top}px`, 
+                  left: `${obj.left}px`, 
+                  width: `${obj.width}px`, 
+                  height: `${obj.height}px`, 
+                  overflow: 'hidden',
+                  zIndex: obj.zIndex || 10
+                }}
               >
                 {obj.type === 'image' ? (
                   <div className="w-full h-full bg-slate-50 relative">
@@ -205,8 +220,15 @@ const App = () => {
                       </div>
                   </div>
                 ) : (
-                  <div style={{ fontSize: `${obj.fontSize}px`, fontFamily: obj.fontFamily || 'sans-serif', color: '#1e293b', lineHeight: 1.2, whiteSpace: 'pre-wrap', padding: '1px' }}>
-                    {obj.content}
+                  <div style={{ 
+                    fontSize: `${obj.fontSize || 12}px`, 
+                    fontFamily: sanitizeFont(obj.fontFamily), 
+                    color: '#1e293b', 
+                    lineHeight: 1.2, 
+                    whiteSpace: 'pre-wrap', 
+                    padding: '1px' 
+                  }}>
+                    {obj.content || (obj.type === 'text' ? 'Text fehlt...' : '')}
                   </div>
                 )}
               </div>
@@ -218,13 +240,13 @@ const App = () => {
       <aside className="w-85 bg-white border-l border-slate-200 flex flex-col shadow-2xl z-40">
         <div className="p-8 border-b border-slate-100 bg-slate-50/40">
             <h2 className="font-bold uppercase text-[10px] tracking-[0.4em] text-slate-400 mb-8 flex items-center gap-2"><Settings2 size={12} className="text-indigo-500" /> Inspektor</h2>
-            {selectedElement && selectedElement.type === 'text' ? (
+            {selectedElement && (selectedElement.type === 'text' || selectedElement.content) ? (
                 <div className="space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
                     <div className="space-y-3">
                         <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block px-1">Inhalt bearbeiten</label>
                         <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm focus-within:border-indigo-500 transition-colors">
                             <textarea className="w-full text-sm outline-none border-none p-0 bg-transparent resize-none h-48 text-slate-700 leading-relaxed font-sans"
-                                value={selectedElement.content} onChange={(e) => handleTextUpdate(selectedId, e.target.value)} placeholder="Text hier eingeben..." />
+                                value={selectedElement.content || ''} onChange={(e) => handleTextUpdate(selectedId, e.target.value)} placeholder="Text hier eingeben..." />
                         </div>
                     </div>
                     <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-2xl border border-indigo-100 text-indigo-600">
