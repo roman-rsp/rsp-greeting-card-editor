@@ -7,7 +7,7 @@ import {
 
 /**
  * STATISCHE TESTDATEN (MOCK DATA)
- * Aktualisiert auf die ID-Struktur des Skripts v3.7.1 (_p0 Suffixe)
+ * Dient als Fallback, falls die API (n8n) nicht antwortet.
  */
 const MOCK_DATA = {
   "wk_motiv": {
@@ -27,7 +27,7 @@ const MOCK_DATA = {
         },
         "Block_302_p0": {
           "id": "Block_302_p0", "type": "text", "top": 150, "left": 50, "width": 400, "height": 60,
-          "layer": "bearbeitung", "content": "Frohes Fest", "fontSize": 32, "fontFamily": "Poppins", "zIndex": 20
+          "layer": "bearbeitung", "content": "Frohes Fest (Statisch)", "fontSize": 32, "fontFamily": "Poppins", "zIndex": 50
         },
         "Block_293_p0": {
           "id": "Block_293_p0", "type": "text", "top": 570, "left": 0, "width": 595, "height": 20,
@@ -49,8 +49,8 @@ const MOCK_DATA = {
       "objects": {
         "Block_451_p0": {
           "id": "Block_451_p0", "type": "text", "top": 100, "left": 50, "width": 500, "height": 100,
-          "layer": "bearbeitung", "content": "Hier steht Ihr individueller Text für die Innenseite.\nZweite Zeile für den Test.",
-          "fontSize": 12, "fontFamily": "Poppins Light", "zIndex": 20
+          "layer": "bearbeitung", "content": "Innenseite Text Vorschau.\nEditierbar.",
+          "fontSize": 12, "fontFamily": "Poppins Light", "zIndex": 50
         },
         "Block_322_p0": {
           "id": "Block_322_p0", "type": "image", "top": 450, "left": 450, "width": 100, "height": 100,
@@ -64,10 +64,7 @@ const MOCK_DATA = {
 const App = () => {
   const [project, setProject] = useState({ front: null, inside: null });
   const [shopContext, setShopContext] = useState({ 
-    artNr: '29009', 
-    frontId: 'wk_motiv', 
-    insideId: 'wk_In_1', 
-    session: 'dev-session' 
+    artNr: '29009', frontId: 'wk_motiv', insideId: 'wk_In_1', session: 'dev-session' 
   });
   
   const [loading, setLoading] = useState(true);
@@ -78,21 +75,38 @@ const App = () => {
   const ASSET_SERVER = "https://bilderserver.rsp-kunstverlag.com"; 
   const N8N_API_URL = "https://n8n-f8jg4-u44283.vm.elestio.app/webhook/get-template";
 
-  // Hilfsfunktion: Bereinigt InDesign-Schriftnamen (entfernt \t)
   const sanitizeFont = (fontName) => {
     if (!fontName) return 'sans-serif';
     return fontName.replace(/\t/g, ' ');
   };
 
+  /**
+   * RESOLVER: Findet Objekte auch wenn die ID leicht abweicht (z.B. mit/ohne _p0)
+   */
+  const resolveObject = (projectData, id) => {
+    if (!projectData || !projectData.objects) return null;
+    if (projectData.objects[id]) return projectData.objects[id];
+    
+    // Suche nach ID ohne Suffix
+    const baseId = id.split('_p')[0];
+    if (projectData.objects[baseId]) return projectData.objects[baseId];
+    
+    // Suche in allen Keys nach Ähnlichkeit
+    const keys = Object.keys(projectData.objects);
+    const match = keys.find(k => k.startsWith(baseId) || baseId.startsWith(k));
+    return match ? projectData.objects[match] : null;
+  };
+
   const fetchTemplate = useCallback(async (templateId) => {
     try {
       const response = await fetch(`${N8N_API_URL}?artNr=${templateId}`);
-      if (!response.ok) throw new Error("API nicht erreichbar");
+      if (!response.ok) throw new Error("API Offline");
       const data = await response.json();
       const result = Array.isArray(data) ? data[0] : data;
+      console.log(`Geladene Daten für ${templateId}:`, result);
       return result.canvas_data.project;
     } catch (err) {
-      console.warn(`Nutze statisches Backup für: ${templateId}`);
+      console.warn(`Nutze MOCK_DATA für: ${templateId}`);
       return MOCK_DATA[templateId]?.project || null;
     }
   }, []);
@@ -144,7 +158,7 @@ const App = () => {
   if (loading) return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50">
       <Loader2 className="animate-spin text-indigo-600 mb-4" size={48} />
-      <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-slate-400">Layout-Engine wird initialisiert...</p>
+      <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-slate-400">Layout-Engine wird synchronisiert...</p>
     </div>
   );
 
@@ -152,9 +166,9 @@ const App = () => {
   if (!currentData) return <div className="p-20">Fehler beim Laden der Vorlage.</div>;
 
   const currentPage = currentData.pages['page_0'];
-  // Filtern, um sicherzustellen, dass nur existierende Objekte gemappt werden
+  // Nutzt den neuen Resolver für die Objektliste
   const objects = currentPage.objectsIds
-    .map(id => currentData.objects[id])
+    .map(id => resolveObject(currentData, id))
     .filter(obj => !!obj);
 
   const selectedElement = selectedId ? currentData.objects[selectedId] : null;
@@ -181,12 +195,17 @@ const App = () => {
       <main className="flex-1 flex flex-col relative overflow-hidden">
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-10 z-20 shadow-sm">
           <div className="flex flex-col">
-              <span className="text-[9px] uppercase font-bold text-indigo-600 tracking-[0.3em] mb-1 italic">Vorschau</span>
+              <span className="text-[9px] uppercase font-bold text-indigo-600 tracking-[0.3em] mb-1 italic tracking-widest">Layout-Vorschau</span>
               <span className="text-sm font-bold text-slate-800 tracking-tight uppercase">Art. {shopContext.artNr} — {activeSide === 'front' ? 'Vorderseite' : 'Innenseite'}</span>
           </div>
-          <button className="flex items-center gap-3 px-10 py-3 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-indigo-600 shadow-xl transition-all active:scale-95 group">
-            <CheckCircle2 size={16} className="text-indigo-400" /> Gestaltung bestätigen
-          </button>
+          <div className="flex items-center gap-4">
+            <div className="px-3 py-1 bg-slate-100 rounded text-[9px] font-bold text-slate-400 uppercase">
+              {objects.length} Objekte geladen
+            </div>
+            <button className="flex items-center gap-3 px-10 py-3 bg-slate-900 text-white rounded-full text-xs font-bold hover:bg-indigo-600 shadow-xl transition-all active:scale-95 group">
+              <CheckCircle2 size={16} className="text-indigo-400" /> Gestaltung bestätigen
+            </button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-auto bg-slate-200/40 p-20 flex items-start justify-center custom-scrollbar">
@@ -194,21 +213,21 @@ const App = () => {
             style={{ width: `${currentPage.width}px`, height: `${currentPage.height}px`, transform: 'scale(1.1)', transformOrigin: 'top center' }}
           >
             {showBleed && (
-              <div className="absolute inset-0 border-red-500/10 border-dashed pointer-events-none z-50"
+              <div className="absolute inset-0 border-red-500/10 border-dashed pointer-events-none z-[100]"
                 style={{ borderTopWidth: `${currentPage.boxes.trimbox.top}px`, borderRightWidth: `${currentPage.boxes.trimbox.right}px`, borderBottomWidth: `${currentPage.boxes.trimbox.bottom}px`, borderLeftWidth: `${currentPage.boxes.trimbox.left}px` }}
               />
             )}
 
             {objects.map(obj => (
               <div key={obj.id} onClick={() => obj.layer !== 'unten' && setSelectedId(obj.id)}
-                className={`absolute transition-all ${obj.layer !== 'unten' ? 'cursor-pointer group' : 'pointer-events-none'} ${selectedId === obj.id ? 'ring-2 ring-indigo-500 z-20 shadow-2xl' : ''}`}
+                className={`absolute transition-all ${obj.layer !== 'unten' ? 'cursor-pointer group' : 'pointer-events-none'} ${selectedId === obj.id ? 'ring-2 ring-indigo-500 z-50 shadow-2xl' : ''}`}
                 style={{ 
                   top: `${obj.top}px`, 
                   left: `${obj.left}px`, 
                   width: `${obj.width}px`, 
                   height: `${obj.height}px`, 
                   overflow: 'hidden',
-                  zIndex: obj.zIndex || 10
+                  zIndex: obj.type === 'text' ? 50 : (obj.zIndex || 10) // Text immer oben forcieren
                 }}
               >
                 {obj.type === 'image' ? (
@@ -226,9 +245,13 @@ const App = () => {
                     color: '#1e293b', 
                     lineHeight: 1.2, 
                     whiteSpace: 'pre-wrap', 
-                    padding: '1px' 
+                    padding: '1px',
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'flex-start'
                   }}>
-                    {obj.content || (obj.type === 'text' ? 'Text fehlt...' : '')}
+                    {obj.content || (obj.type === 'text' ? 'Textfeld leer' : '')}
                   </div>
                 )}
               </div>
@@ -240,7 +263,7 @@ const App = () => {
       <aside className="w-85 bg-white border-l border-slate-200 flex flex-col shadow-2xl z-40">
         <div className="p-8 border-b border-slate-100 bg-slate-50/40">
             <h2 className="font-bold uppercase text-[10px] tracking-[0.4em] text-slate-400 mb-8 flex items-center gap-2"><Settings2 size={12} className="text-indigo-500" /> Inspektor</h2>
-            {selectedElement && (selectedElement.type === 'text' || selectedElement.content) ? (
+            {selectedElement && (selectedElement.type === 'text' || selectedElement.content !== undefined) ? (
                 <div className="space-y-8 animate-in fade-in slide-in-from-right-5 duration-300">
                     <div className="space-y-3">
                         <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block px-1">Inhalt bearbeiten</label>
@@ -250,7 +273,7 @@ const App = () => {
                         </div>
                     </div>
                     <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-2xl border border-indigo-100 text-indigo-600">
-                        <div className="flex items-center gap-2"><Info size={14} /><span className="text-[10px] font-bold uppercase tracking-tight">Ebene: {selectedElement.layer}</span></div>
+                        <div className="flex items-center gap-2"><Info size={14} /><span className="text-[10px] font-bold uppercase tracking-tight">ID: {selectedElement.id}</span></div>
                         {selectedElement.isLocked ? <Lock size={14} /> : <Unlock size={14} />}
                     </div>
                 </div>
